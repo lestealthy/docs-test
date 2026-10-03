@@ -35,6 +35,12 @@ site/
 *.swo
 *~
 
+# Large files
+_docs/pdfs/
+_docs/txt/
+_docs/*.epub
+WattLab\ Guides/
+
 # OS
 .DS_Store
 Thumbs.db
