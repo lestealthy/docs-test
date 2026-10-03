@@ -1,0 +1,19 @@
+# PDF to Text Converter Requirements
+# Install with: pip install -r requirements.txt
+
+# Core PDF processing libraries
+PyPDF2==3.0.1
+pdfplumber==0.10.3
+
+# Progress bar for better user experience
+tqdm==4.66.1
+
+# Additional useful libraries for text processing
+# Uncomment if needed for advanced text processing
+# nltk==3.8.1
+# spacy==3.7.2
+
+# For potential OCR support (if needed for scanned PDFs)
+# pytesseract==0.3.10
+# Pillow==10.1.0
+

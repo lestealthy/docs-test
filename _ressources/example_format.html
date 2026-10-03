@@ -1,0 +1,214 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quick Start</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background-color: #1a1a1a;
+            color: #ffffff;
+            line-height: 1.6;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            border-bottom: 2px solid #00d4aa;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #00d4aa;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: #888;
+            font-size: 1.1rem;
+        }
+        
+        .content {
+            font-size: 1.1rem;
+            line-height: 1.8;
+        }
+        
+        .content h1, .content h2, .content h3, .content h4, .content h5, .content h6 {
+            color: #00d4aa;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+        
+        .content h1 { font-size: 2rem; }
+        .content h2 { font-size: 1.7rem; }
+        .content h3 { font-size: 1.4rem; }
+        .content h4 { font-size: 1.2rem; }
+        
+        .content p {
+            margin-bottom: 15px;
+        }
+        
+        .content ul, .content ol {
+            margin-left: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .content li {
+            margin-bottom: 5px;
+        }
+        
+        .content blockquote {
+            border-left: 4px solid #00d4aa;
+            padding-left: 20px;
+            margin: 20px 0;
+            color: #ccc;
+            font-style: italic;
+        }
+        
+        .content code {
+            background-color: #333;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .content pre {
+            background-color: #333;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+        
+        .content pre code {
+            background: none;
+            padding: 0;
+        }
+        
+        .content a {
+            color: #00d4aa;
+            text-decoration: none;
+        }
+        
+        .content a:hover {
+            text-decoration: underline;
+        }
+        
+        .content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        
+        .content th, .content td {
+            border: 1px solid #444;
+            padding: 10px;
+            text-align: left;
+        }
+        
+        .content th {
+            background-color: #333;
+            color: #00d4aa;
+        }
+        
+        .metadata {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #444;
+            color: #888;
+            font-size: 0.9rem;
+        }
+        
+        .toc {
+            background-color: #222;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        
+        .toc h3 {
+            color: #00d4aa;
+            margin-bottom: 15px;
+        }
+        
+        .toc ul {
+            list-style: none;
+            margin-left: 0;
+        }
+        
+        .toc a {
+            color: #fff;
+            text-decoration: none;
+            display: block;
+            padding: 5px 0;
+        }
+        
+        .toc a:hover {
+            color: #00d4aa;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1 class="title">{{TITLE}}</h1>
+        <p class="subtitle">Exported from Wiki Notes</p>
+    </div>
+    
+    <div class="toc"><h3>Table of Contents</h3><ul><li><a href="#how-to-blink-an-led-with-arduino-a-beginner-s-guide">🔧 How to Blink an LED with Arduino – A Beginner’s Guide</a></li>  <li><a href="#what-you-ll-learn">📝 What You’ll Learn</a></li>  <li><a href="#required-components">⚙️ Required Components</a></li>  <li><a href="#circuit-overview">📐 Circuit Overview</a></li>  <li><a href="#the-arduino-code">💻 The Arduino Code</a></li>  <li><a href="#quick-reference-table">📊 Quick Reference Table</a></li>  <li><a href="#experiment">🔬 Experiment</a></li>  <li><a href="#quote-of-the-day">📢 Quote of the Day</a></li>  <li><a href="#wrapping-up">✅ Wrapping Up</a></li>    <li><a href="#tags">🔖 Tags</a></li></ul></div>
+    
+    <div class="content">
+        <p>
+<h1>🔧 How to Blink an LED with Arduino – A Beginner’s Guide</h1></p><p>Electronics can feel overwhelming at first, but one of the <strong>simplest and most rewarding projects</strong> is making an LED blink.  
+This tiny circuit introduces you to the world of <strong>microcontrollers, hardware, and code</strong>.</p><p>---</p><p><h2>📝 What You’ll Learn</h2>
+- How to wire a basic LED circuit
+- Why resistors are essential
+- Writing and uploading Arduino code
+- Experimenting with timing and variations</p><p>---</p><p><h2>⚙️ Required Components</h2>
+1. Arduino Uno (or compatible board)  
+2. Breadboard  
+3. 1x LED (any color)  
+4. 220Ω Resistor  
+5. Jumper wires  </p><p>---</p><p><h2>📐 Circuit Overview</h2>
+Here’s the basic wiring (replace with your own diagram):</p><p>!<a href="https://example.com/led_circuit.png">LED Circuit</a></p><p><blockquote>💡 <strong>Tip</strong>: Always connect a resistor in series with your LED to prevent excessive current flow.</blockquote></p><p>---</p><p><h2>💻 The Arduino Code</h2>
+<pre><code>c
+// Blink example
+const int ledPin = 13; // Built-in LED on most Arduino boards</p><p>void setup() {
+  pinMode(ledPin, OUTPUT); 
+}</p><p>void loop() {
+  digitalWrite(ledPin, HIGH); // turn LED on
+  delay(500);                 // wait 0.5 second
+  digitalWrite(ledPin, LOW);  // turn LED off
+  delay(500);                 // wait 0.5 second
+}
+</code></pre><code></p><p>---</p><p><h2>📊 Quick Reference Table</h2></p><p>| Pin | Component | Notes                     |
+| --- | --------- | ------------------------- |
+| 13  | LED (+)   | Built-in or external      |
+| GND | LED (–)   | Connect via 220Ω resistor |
+| USB | Power     | From your computer        |</p><p>---</p><p><h2>🔬 Experiment</h2></p><p><ul><li>Change the </code>delay(500)<code> to </code>delay(100)<code> and watch the LED blink faster.</li>
+<li>Try using </code>analogWrite()<code> for dimming effects.</li>
+<li>Add multiple LEDs on pins 8, 9, 10 for patterns.</li></ul></p><p>---</p><p><h2>📢 Quote of the Day</h2></p><p><blockquote>“The best way to get started with electronics is to light up an LED.” – <em>Every Maker Ever</em></blockquote></p><p>---</p><p><h2>✅ Wrapping Up</h2></p><p>You’ve just built your first <strong>Arduino project</strong>! 🎉
+With only a few parts and a few lines of code, you’ve controlled <strong>hardware with software</strong>.</p><p>Next, you can extend this to <strong>traffic lights, sensors, or even robotics</strong>.</p><p>---</p><p><h3>🔖 Tags</h3></p><p>\#arduino #electronics #embedded #tutorial #beginner</p><p></code>``
+</p>
+    </div>
+    
+    
+        <div class="metadata">
+          <p><strong>Created:</strong> 19/09/2025</p>
+          <p><strong>Updated:</strong> 19/09/2025</p>
+          
+        </div>
+      
+</body>
+</html>

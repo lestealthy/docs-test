@@ -1,0 +1,138 @@
+site_name: WattLab Guides
+site_description: Advanced Embedded Systems Knowledge Base
+site_author: WattLab
+repo_url: https://github.com/
+repo_name: _docs_TEST
+
+theme:
+  name: material
+  palette:
+    - scheme: slate
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-7
+        name: Switch to light mode
+    - scheme: default
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-4
+        name: Switch to dark mode
+  features:
+    - navigation.sections
+    - navigation.top
+    - navigation.tracking
+    - navigation.indexes
+    - navigation.expand
+    - navigation.prune
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - toc.follow
+    - toc.integrate
+    - search.suggest
+    - search.highlight
+    - search.share
+    - content.code.copy
+    - content.code.annotate
+    - content.tooltips
+    - content.tabs.link
+  font:
+    text: Roboto
+    code: Roboto Mono
+  icon:
+    logo: material/developer-board
+    repo: fontawesome/brands/github
+  # custom_dir: overrides
+
+plugins:
+  - search
+  - minify:
+      minify_html: true
+  - git-revision-date:
+      enabled: !ENV [CI, false]
+  - redirects:
+      redirect_maps:
+        'index.md': 'index.md'
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - attr_list
+  - md_in_html
+  - tables
+  - footnotes
+  - def_list
+  - abbr
+  - toc:
+      permalink: true
+      permalink_title: Anchor link to this section for reference
+
+extra_css:
+  - stylesheets/extra.css
+
+extra_javascript:
+  - javascripts/extra.js
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github/
+  version:
+    provider: mike
+
+nav:
+  - Home: index.md
+  - Hardware:
+    - hardware/index.md
+    - Electronic Fundamentals: hardware/electronic-fundamentals.md
+    - Microprocessors & Microcontrollers: hardware/microprocessors.md
+    - Embedded Hardware Design: hardware/embedded-design.md
+  - Software:
+    - software/index.md
+    - Embedded Programming: software/embedded-programming.md
+    - Real-Time Systems & RTOS: software/rtos.md
+    - Design Patterns: software/design-patterns.md
+    - Embedded Linux: software/embedded-linux.md
+  - Cloud & IoT:
+    - cloud/index.md
+    - IoT Architecture: cloud/iot-architecture.md
+    - Cloud Integration: cloud/cloud-integration.md
+  - Security:
+    - security/index.md
+    - Cryptography: security/cryptography.md
+    - Hardware Security: security/hardware-security.md
+    - Defensive Measures: security/defensive-measures.md
+  - Robotics:
+    - robotics/index.md
+    - Robotics Fundamentals: robotics/fundamentals.md
+    - Cyber-Physical Systems: robotics/cps.md
+    - Machine Learning at Edge: robotics/edge-ml.md
+  - Testing:
+    - testing/index.md
+    - Unit Testing: testing/unit-testing.md
+    - Integration Testing: testing/integration-testing.md
+    - Debugging Tools: testing/debugging.md
+  - Resources:
+    - resources/index.md
+    - Books & References: resources/books.md
+    - Development Tools: resources/tools.md
+    - Learning Paths: resources/learning-paths.md

@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Robotics & CPS - WattLab Guides</title>
+    <link rel="stylesheet" href="../css/main.css">
+    <link rel="icon" type="image/svg+xml" href="../assets/icons/svg/developer_board.svg">
+</head>
+    <!-- Sticky Search Bar -->
+    <div class="search-bar">
+        <div class="search-container">
+            <button class="mobile-menu-btn" onclick="wattLab.toggleMobileNav()">☰</button>
+            <input type="text" class="search-input" placeholder="Search embedded systems topics, patterns, protocols..." />
+            <button class="search-btn">Search</button>
+        </div>
+    </div>
+    
+    <!-- Main Container -->
+    <div class="main-container">
+        <!-- Left Navigation -->
+        <nav class="nav-sidebar" id="navSidebar">
+            <!-- Navigation will be populated by JavaScript -->
+        </nav>
+        
+        <!-- Content Area -->
+        <main class="content-area">
+            <div class="content-header">
+                <h1 class="content-title">🤖 Robotics & CPS</h1>
+                <p class="content-subtitle">Advanced robotics & cps for embedded systems</p>
+            </div>
+            
+            <div class="breadcrumb">
+                <a href="../index.html">Home</a> > <a href="#robotics & cps">Robotics & CPS</a>
+            </div>
+            
+            <div class="content">
+        <h1>Robotics & Cyber-Physical Systems</h1>
+        
+        <!-- Robotics Fundamentals -->
+        <section id="robotics-fundamentals">
+            <h2>Robotics Fundamentals</h2>
+            
+            <h3>Robot Kinematics</h3>
+            <p>Mathematical foundation for robot motion and positioning:</p>
+            
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Forward Kinematics Implementation</span>
+                    <button class="copy-btn" onclick="copyToClipboard('forward-kinematics')">Copy</button>
+                </div>
+                <pre id="forward-kinematics"><code>#include <math.h>
+
+typedef struct {
+    float x, y, z;
+    float roll, pitch, yaw;
+} pose_t;
+
+typedef struct {
+    float length;
+    float angle;
+} joint_t;
+
+// DH parameters for 6-DOF robot arm
+typedef struct {
+    float a, d, alpha, theta;
+} dh_params_t;
+
+static dh_params_t dh_table[] = {
+    {0,     0,     M_PI/2, 0},    // Joint 1
+    {0.3,   0,     0,      0},    // Joint 2
+    {0.25,  0,     0,      0},    // Joint 3
+    {0,     0,     M_PI/2, 0},    // Joint 4
+    {0,     0.1,   0,      0},    // Joint 5
+    {0,     0.05,  0,      0}     // Joint 6
+};
+
+pose_t forward_kinematics(joint_t *joints, int num_joints) {
+    float T[4][4] = {{1,0,0,0}, {0,1,0,0}, {0,0,1,0}, {0,0,0,1}};
+    
+    for (int i = 0; i < num_joints; i++) {
+        float c = cos(joints[i].angle);
+        float s = sin(joints[i].angle);
+        float ca = cos(dh_table[i].alpha);
+        float sa = sin(dh_table[i].alpha);
+        
+        float T_i[4][4] = {
+            {c, -s*ca,  s*sa, dh_table[i].a*c},
+            {s,  c*ca, -c*sa, dh_table[i].a*s},
+            {0,    sa,    ca, dh_table[i].d},
+            {0,     0,     0, 1}
+        };
+        
+        // Matrix multiplication T = T * T_i
+        multiply_matrices(T, T_i, T);
+    }
+    
+    pose_t end_effector = {
+        .x = T[0][3],
+        .y = T[1][3],
+        .z = T[2][3],
+        .roll = atan2(T[2][1], T[2][2]),
+        .pitch = atan2(-T[2][0], sqrt(T[2][1]*T[2][1] + T[2][2]*T[2][2])),
+        .yaw = atan2(T[1][0], T[0][0])
+    };
+    
+    return end_effector;
+}
+
+void multiply_matrices(float A[4][4], float B[4][4], float result[4][4]) {
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            result[i][j] = 0;
+            for (int k = 0; k < 4; k++) {
+                result[i][j] += A[i][k] * B[k][j];
+            }
+        }
+    }
+}</code></pre>
+            </div>
+
+            <h3>Sensor Fusion</h3>
+            <p>Combining multiple sensor inputs for robust perception:</p>
+            
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Kalman Filter Implementation</span>
+                    <button class="copy-btn" onclick="copyToClipboard('kalman-filter')">Copy</button>
+                </div>
+                <pre id="kalman-filter"><code>#include <zephyr/kernel.h>
+#include <zephyr/drivers/sensor.h>
+
+typedef struct {
+    float x, y, z;           // Position
+    float vx, vy, vz;        // Velocity
+    float ax, ay, az;        // Acceleration
+    float qw, qx, qy, qz;    // Quaternion orientation
+} robot_state_t;
+
+typedef struct {
+    float P[9][9];           // Covariance matrix
+    float Q[9][9];           // Process noise
+    float R[6][6];           // Measurement noise
+    float dt;                // Time step
+} kalman_filter_t;
+
+static void kalman_predict(kalman_filter_t *kf, robot_state_t *state) {
+    // State transition matrix F
+    float F[9][9] = {
+        {1, 0, 0, kf->dt, 0, 0, 0, 0, 0},
+        {0, 1, 0, 0, kf->dt, 0, 0, 0, 0},
+        {0, 0, 1, 0, 0, kf->dt, 0, 0, 0},
+        {0, 0, 0, 1, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 1, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 1, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 1, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 1, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 1}
+    };
+    
+    // Predict state: x = F * x
+    float new_state[9] = {state->x, state->y, state->z, 
+                         state->vx, state->vy, state->vz,
+                         state->qw, state->qx, state->qy};
+    
+    float predicted_state[9];
+    matrix_vector_multiply(F, new_state, predicted_state);
+    
+    // Update state
+    state->x = predicted_state[0];
+    state->y = predicted_state[1];
+    state->z = predicted_state[2];
+    state->vx = predicted_state[3];
+    state->vy = predicted_state[4];
+    state->vz = predicted_state[5];
+    state->qw = predicted_state[6];
+    state->qx = predicted_state[7];
+    state->qy = predicted_state[8];
+    
+    // Predict covariance: P = F * P * F^T + Q
+    float temp[9][9];
+    matrix_multiply(F, kf->P, temp);
+    matrix_transpose_multiply(temp, F, kf->P);
+    matrix_add(kf->P, kf->Q, kf->P);
+}
+
+static void kalman_update(kalman_filter_t *kf, robot_state_t *state, 
+                         float *measurements) {
+    // Measurement matrix H (GPS + IMU)
+    float H[6][9] = {
+        {1, 0, 0, 0, 0, 0, 0, 0, 0},  // GPS x
+        {0, 1, 0, 0, 0, 0, 0, 0, 0},  // GPS y
+        {0, 0, 1, 0, 0, 0, 0, 0, 0},  // GPS z
+        {0, 0, 0, 0, 0, 0, 1, 0, 0},  // IMU qw
+        {0, 0, 0, 0, 0, 0, 0, 1, 0},  // IMU qx
+        {0, 0, 0, 0, 0, 0, 0, 0, 1}   // IMU qy
+    };
+    
+    // Innovation: y = z - H * x
+    float innovation[6];
+    float Hx[6];
+    matrix_vector_multiply(H, (float*)state, Hx);
+    
+    for (int i = 0; i < 6; i++) {
+        innovation[i] = measurements[i] - Hx[i];
+    }
+    
+    // Innovation covariance: S = H * P * H^T + R
+    float S[6][6];
+    float temp[6][9];
+    matrix_multiply(H, kf->P, temp);
+    matrix_transpose_multiply(temp, H, S);
+    matrix_add(S, kf->R, S);
+    
+    // Kalman gain: K = P * H^T * S^(-1)
+    float K[9][6];
+    float PHT[9][6];
+    matrix_transpose_multiply(kf->P, H, PHT);
+    matrix_multiply_inverse(PHT, S, K);
+    
+    // Update state: x = x + K * y
+    float Ky[9];
+    matrix_vector_multiply(K, innovation, Ky);
+    
+    state->x += Ky[0];
+    state->y += Ky[1];
+    state->z += Ky[2];
+    state->vx += Ky[3];
+    state->vy += Ky[4];
+    state->vz += Ky[5];
+    state->qw += Ky[6];
+    state->qx += Ky[7];
+    state->qy += Ky[8];
+    
+    // Update covariance: P = (I - K * H) * P
+    float IKH[9][9];
+    float KH[9][9];
+    matrix_multiply(K, H, KH);
+    matrix_subtract_identity(KH, IKH);
+    matrix_multiply(IKH, kf->P, kf->P);
+}</code></pre>
+            </div>
+        </section>
+
+        <!-- Cyber-Physical Systems -->
+        <section id="cyber-physical-systems">
+            <h2>Cyber-Physical Systems</h2>
+            
+            <h3>Real-Time Control Systems</h3>
+            <p>Control theory implementation for CPS:</p>
+            
+            <div class="code-block">
+                <div class="code-header">
+                    <span>PID Controller Implementation</span>
+                    <button class="copy-btn" onclick="copyToClipboard('pid-controller')">Copy</button>
+                </div>
+                <pre id="pid-controller"><code>#include <zephyr/kernel.h>
+
+typedef struct {
+    float kp, ki, kd;        // PID gains
+    float setpoint;          // Target value
+    float integral;          // Integral accumulator
+    float previous_error;    // Previous error for derivative
+    float output_min, output_max;  // Output limits
+    float dt;                // Time step
+} pid_controller_t;
+
+static float pid_compute(pid_controller_t *pid, float input) {
+    float error = pid->setpoint - input;
+    
+    // Proportional term
+    float p_term = pid->kp * error;
+    
+    // Integral term
+    pid->integral += error * pid->dt;
+    float i_term = pid->ki * pid->integral;
+    
+    // Derivative term
+    float derivative = (error - pid->previous_error) / pid->dt;
+    float d_term = pid->kd * derivative;
+    
+    // PID output
+    float output = p_term + i_term + d_term;
+    
+    // Apply output limits
+    if (output > pid->output_max) {
+        output = pid->output_max;
+        pid->integral -= error * pid->dt;  // Anti-windup
+    } else if (output < pid->output_min) {
+        output = pid->output_min;
+        pid->integral -= error * pid->dt;  // Anti-windup
+    }
+    
+    pid->previous_error = error;
+    return output;
+}
+
+// Advanced PID with feedforward
+typedef struct {
+    pid_controller_t pid;
+    float feedforward_gain;
+    float setpoint_derivative;
+    float previous_setpoint;
+} advanced_pid_t;
+
+static float advanced_pid_compute(advanced_pid_t *pid, float input) {
+    float error = pid->pid.setpoint - input;
+    
+    // Standard PID computation
+    float pid_output = pid_compute(&pid->pid, input);
+    
+    // Feedforward term
+    float setpoint_derivative = (pid->pid.setpoint - pid->previous_setpoint) / pid->pid.dt;
+    float feedforward = pid->feedforward_gain * setpoint_derivative;
+    
+    float output = pid_output + feedforward;
+    
+    // Apply limits
+    if (output > pid->pid.output_max) output = pid->pid.output_max;
+    if (output < pid->pid.output_min) output = pid->pid.output_min;
+    
+    pid->previous_setpoint = pid->pid.setpoint;
+    return output;
+}</code></pre>
+            </div>
+
+            <h3>Networked Control Systems</h3>
+            <p>Control over communication networks with delay compensation:</p>
+            
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Networked Control Implementation</span>
+                    <button class="copy-btn" onclick="copyToClipboard('networked-control')">Copy</button>
+                </div>
+                <pre id="networked-control"><code>#include <zephyr/net/socket.h>
+#include <zephyr/kernel.h>
+
+typedef struct {
+    float position;
+    float velocity;
+    float timestamp;
+} control_packet_t;
+
+typedef struct {
+    float buffer[10];        // Control command buffer
+    uint32_t timestamps[10]; // Packet timestamps
+    uint8_t head, tail;      // Buffer pointers
+    float delay_estimate;    // Network delay estimate
+    float jitter_estimate;   // Network jitter estimate
+} network_buffer_t;
+
+static void network_control_init(network_buffer_t *nb) {
+    nb->head = nb->tail = 0;
+    nb->delay_estimate = 0.01f;  // 10ms initial estimate
+    nb->jitter_estimate = 0.005f; // 5ms jitter estimate
+}
+
+static void network_control_send(int socket, float control_output) {
+    control_packet_t packet = {
+        .position = control_output,
+        .velocity = 0.0f,  // Could include velocity feedforward
+        .timestamp = k_uptime_get() / 1000.0f
+    };
+    
+    send(socket, &packet, sizeof(packet), 0);
+}
+
+static float network_control_receive(network_buffer_t *nb, int socket) {
+    control_packet_t packet;
+    int received = recv(socket, &packet, sizeof(packet), MSG_DONTWAIT);
+    
+    if (received > 0) {
+        // Add to buffer with timestamp
+        nb->buffer[nb->head] = packet.position;
+        nb->timestamps[nb->head] = k_uptime_get();
+        nb->head = (nb->head + 1) % 10;
+        
+        // Update delay estimate
+        float current_time = k_uptime_get();
+        float network_delay = (current_time - packet.timestamp * 1000) / 1000.0f;
+        nb->delay_estimate = 0.9f * nb->delay_estimate + 0.1f * network_delay;
+    }
+    
+    // Get most recent valid command
+    if (nb->head != nb->tail) {
+        float command = nb->buffer[nb->tail];
+        nb->tail = (nb->tail + 1) % 10;
+        return command;
+    }
+    
+    return 0.0f;  // No command available
+}
+
+// Predictive control to compensate for network delays
+static float predictive_control(network_buffer_t *nb, float current_state, 
+                               float setpoint, float dt) {
+    // Predict future state based on current dynamics
+    float predicted_state = current_state + nb->delay_estimate * 0.1f;  // Simple prediction
+    
+    // Calculate control based on predicted state
+    float error = setpoint - predicted_state;
+    float control_output = 2.0f * error;  // Simple proportional control
+    
+    return control_output;
+}</code></pre>
+            </div>
+        </section>
+
+        <!-- Machine Learning at Edge -->
+        <section id="edge-ml">
+            <h2>Machine Learning at Edge</h2>
+            
+            <h3>Neural Network Inference</h3>
+            <p>Running ML models on embedded systems:</p>
+            
+            <div class="code-block">
+                <div class="code-header">
+                    <span>TensorFlow Lite Micro Implementation</span>
+                    <button class="copy-btn" onclick="copyToClipboard('tflite-micro')">Copy</button>
+                </div>
+                <pre id="tflite-micro"><code>#include "tensorflow/lite/micro/all_ops_resolver.h"
+#include "tensorflow/lite/micro/micro_error_reporter.h"
+#include "tensorflow/lite/micro/micro_interpreter.h"
+
+// Model for robot navigation
+static tflite::MicroErrorReporter micro_error_reporter;
+static tflite::AllOpsResolver resolver;
+static tflite::MicroInterpreter *interpreter = nullptr;
+static TfLiteTensor *input = nullptr;
+static TfLiteTensor *output = nullptr;
+
+// Model data (compiled from .tflite file)
+extern const unsigned char g_model[];
+extern const int g_model_len;
+
+// Tensor arena for model execution
+static const int kTensorArenaSize = 2000;
+static uint8_t tensor_arena[kTensorArenaSize];
+
+int ml_model_init(void) {
+    const tflite::Model *model = tflite::GetModel(g_model);
+    if (model->version() != TFLITE_SCHEMA_VERSION) {
+        return -1;
+    }
+    
+    static tflite::MicroInterpreter static_interpreter(
+        model, resolver, tensor_arena, kTensorArenaSize, &micro_error_reporter);
+    interpreter = &static_interpreter;
+    
+    TfLiteStatus allocate_status = interpreter->AllocateTensors();
+    if (allocate_status != kTfLiteOk) {
+        return -1;
+    }
+    
+    input = interpreter->input(0);
+    output = interpreter->output(0);
+    
+    return 0;
+}
+
+// Robot navigation inference
+typedef struct {
+    float distance_front;
+    float distance_left;
+    float distance_right;
+    float velocity;
+    float angular_velocity;
+} sensor_data_t;
+
+typedef struct {
+    float linear_velocity;
+    float angular_velocity;
+} control_output_t;
+
+control_output_t ml_navigation_inference(sensor_data_t *sensors) {
+    // Prepare input data
+    float input_data[5] = {
+        sensors->distance_front,
+        sensors->distance_left,
+        sensors->distance_right,
+        sensors->velocity,
+        sensors->angular_velocity
+    };
+    
+    // Copy input data to model input tensor
+    memcpy(input->data.f, input_data, input->bytes);
+    
+    // Run inference
+    TfLiteStatus invoke_status = interpreter->Invoke();
+    if (invoke_status != kTfLiteOk) {
+        return {0.0f, 0.0f};  // Stop if inference fails
+    }
+    
+    // Extract control outputs
+    control_output_t control = {
+        .linear_velocity = output->data.f[0],
+        .angular_velocity = output->data.f[1]
+    };
+    
+    return control;
+}
+
+// Object detection for robot vision
+typedef struct {
+    float x, y, width, height;
+    float confidence;
+    int class_id;
+} detection_t;
+
+detection_t ml_object_detection(uint8_t *image_data, int width, int height) {
+    // Preprocess image (resize, normalize)
+    float processed_image[224 * 224 * 3];
+    preprocess_image(image_data, width, height, processed_image);
+    
+    // Copy to input tensor
+    memcpy(input->data.f, processed_image, input->bytes);
+    
+    // Run inference
+    interpreter->Invoke();
+    
+    // Post-process outputs to get bounding boxes
+    detection_t detection = {
+        .x = output->data.f[0] * width,
+        .y = output->data.f[1] * height,
+        .width = output->data.f[2] * width,
+        .height = output->data.f[3] * height,
+        .confidence = output->data.f[4],
+        .class_id = (int)output->data.f[5]
+    };
+    
+    return detection;
+}</code></pre>
+            </div>
+
+            <h3>Reinforcement Learning</h3>
+            <p>Online learning for adaptive robot behavior:</p>
+            
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Q-Learning Implementation</span>
+                    <button class="copy-btn" onclick="copyToClipboard('q-learning')">Copy</button>
+                </div>
+                <pre id="q-learning"><code>#include <zephyr/kernel.h>
+#include <zephyr/random/random.h>
+
+#define STATE_SIZE 8
+#define ACTION_SIZE 4
+#define Q_TABLE_SIZE 1000
+
+typedef struct {
+    float q_table[Q_TABLE_SIZE][ACTION_SIZE];
+    float learning_rate;
+    float discount_factor;
+    float epsilon;  // Exploration rate
+    uint32_t state_hash[Q_TABLE_SIZE];
+    uint32_t table_size;
+} q_learning_t;
+
+static uint32_t hash_state(float *state) {
+    uint32_t hash = 0;
+    for (int i = 0; i < STATE_SIZE; i++) {
+        hash = hash * 31 + (uint32_t)(state[i] * 1000);
+    }
+    return hash % Q_TABLE_SIZE;
+}
+
+static int get_state_index(q_learning_t *ql, float *state) {
+    uint32_t hash = hash_state(state);
+    
+    // Find existing state or add new one
+    for (int i = 0; i < ql->table_size; i++) {
+        if (ql->state_hash[i] == hash) {
+            return i;
+        }
+    }
+    
+    // Add new state if table not full
+    if (ql->table_size < Q_TABLE_SIZE) {
+        ql->state_hash[ql->table_size] = hash;
+        return ql->table_size++;
+    }
+    
+    return 0;  // Use first state if table full
+}
+
+static int select_action(q_learning_t *ql, float *state) {
+    int state_idx = get_state_index(ql, state);
+    
+    // Epsilon-greedy action selection
+    float random_value = (float)sys_rand32_get() / UINT32_MAX;
+    
+    if (random_value < ql->epsilon) {
+        // Explore: random action
+        return sys_rand32_get() % ACTION_SIZE;
+    } else {
+        // Exploit: best action
+        int best_action = 0;
+        float best_value = ql->q_table[state_idx][0];
+        
+        for (int a = 1; a < ACTION_SIZE; a++) {
+            if (ql->q_table[state_idx][a] > best_value) {
+                best_value = ql->q_table[state_idx][a];
+                best_action = a;
+            }
+        }
+        return best_action;
+    }
+}
+
+static void update_q_value(q_learning_t *ql, float *state, int action, 
+                          float reward, float *next_state) {
+    int state_idx = get_state_index(ql, state);
+    int next_state_idx = get_state_index(ql, next_state);
+    
+    // Find max Q-value for next state
+    float max_next_q = ql->q_table[next_state_idx][0];
+    for (int a = 1; a < ACTION_SIZE; a++) {
+        if (ql->q_table[next_state_idx][a] > max_next_q) {
+            max_next_q = ql->q_table[next_state_idx][a];
+        }
+    }
+    
+    // Q-learning update rule
+    float current_q = ql->q_table[state_idx][action];
+    float target_q = reward + ql->discount_factor * max_next_q;
+    ql->q_table[state_idx][action] = current_q + 
+        ql->learning_rate * (target_q - current_q);
+}
+
+// Robot learning task: navigation
+typedef struct {
+    float x, y, theta;           // Robot pose
+    float distance_front;        // Sensor readings
+    float distance_left;
+    float distance_right;
+    float velocity;              // Current velocity
+} robot_state_t;
+
+static float get_reward(robot_state_t *state, int action) {
+    float reward = 0.0f;
+    
+    // Reward for moving forward
+    if (action == 0) {  // Move forward
+        reward += 1.0f;
+    }
+    
+    // Penalty for collision
+    if (state->distance_front < 0.5f) {
+        reward -= 10.0f;
+    }
+    
+    // Reward for reaching goal
+    float distance_to_goal = sqrt(state->x*state->x + state->y*state->y);
+    if (distance_to_goal < 1.0f) {
+        reward += 100.0f;
+    }
+    
+    return reward;
+}
+
+static void robot_learning_step(q_learning_t *ql, robot_state_t *current_state,
+                               robot_state_t *next_state, int action, float reward) {
+    float state_array[STATE_SIZE] = {
+        current_state->x, current_state->y, current_state->theta,
+        current_state->distance_front, current_state->distance_left,
+        current_state->distance_right, current_state->velocity, 0
+    };
+    
+    float next_state_array[STATE_SIZE] = {
+        next_state->x, next_state->y, next_state->theta,
+        next_state->distance_front, next_state->distance_left,
+        next_state->distance_right, next_state->velocity, 0
+    };
+    
+    update_q_value(ql, state_array, action, reward, next_state_array);
+    
+    // Decay exploration rate
+    ql->epsilon *= 0.995f;
+    if (ql->epsilon < 0.01f) ql->epsilon = 0.01f;
+}</code></pre>
+            </div>
+        </section>
+
+        <!-- Autonomous Systems -->
+        <section id="autonomous-systems">
+            <h2>Autonomous Systems</h2>
+            
+            <h3>Path Planning</h3>
+            <p>Algorithms for autonomous navigation:</p>
+            
+            <div class="code-block">
+                <div class="code-header">
+                    <span>A* Path Planning</span>
+                    <button class="copy-btn" onclick="copyToClipboard('astar-planning')">Copy</button>
+                </div>
+                <pre id="astar-planning"><code>#include <zephyr/kernel.h>
+#include <math.h>
+
+#define MAP_WIDTH 100
+#define MAP_HEIGHT 100
+#define MAX_NODES 10000
+
+typedef struct {
+    int x, y;
+    float g_cost, h_cost, f_cost;
+    int parent_x, parent_y;
+    bool closed;
+} node_t;
+
+typedef struct {
+    bool obstacle[MAP_WIDTH][MAP_HEIGHT];
+    node_t nodes[MAP_WIDTH][MAP_HEIGHT];
+} pathfinding_map_t;
+
+static float heuristic(int x1, int y1, int x2, int y2) {
+    return sqrt((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2));
+}
+
+static bool is_valid_position(pathfinding_map_t *map, int x, int y) {
+    return x >= 0 && x < MAP_WIDTH && y >= 0 && y < MAP_HEIGHT && 
+           !map->obstacle[x][y];
+}
+
+static void astar_pathfinding(pathfinding_map_t *map, int start_x, int start_y,
+                             int goal_x, int goal_y, int *path_x, int *path_y, 
+                             int *path_length) {
+    // Initialize all nodes
+    for (int x = 0; x < MAP_WIDTH; x++) {
+        for (int y = 0; y < MAP_HEIGHT; y++) {
+            map->nodes[x][y].x = x;
+            map->nodes[x][y].y = y;
+            map->nodes[x][y].g_cost = INFINITY;
+            map->nodes[x][y].h_cost = heuristic(x, y, goal_x, goal_y);
+            map->nodes[x][y].f_cost = INFINITY;
+            map->nodes[x][y].closed = false;
+        }
+    }
+    
+    // Start node
+    map->nodes[start_x][start_y].g_cost = 0;
+    map->nodes[start_x][start_y].f_cost = map->nodes[start_x][start_y].h_cost;
+    
+    // Open list (simplified as array)
+    int open_list[MAX_NODES];
+    int open_count = 0;
+    open_list[open_count++] = start_x * MAP_WIDTH + start_y;
+    
+    while (open_count > 0) {
+        // Find node with lowest f_cost
+        int current_idx = 0;
+        for (int i = 1; i < open_count; i++) {
+            int x = open_list[i] / MAP_WIDTH;
+            int y = open_list[i] % MAP_WIDTH;
+            int current_x = open_list[current_idx] / MAP_WIDTH;
+            int current_y = open_list[current_idx] % MAP_WIDTH;
+            
+            if (map->nodes[x][y].f_cost < map->nodes[current_x][current_y].f_cost) {
+                current_idx = i;
+            }
+        }
+        
+        int current = open_list[current_idx];
+        int current_x = current / MAP_WIDTH;
+        int current_y = current % MAP_WIDTH;
+        
+        // Remove from open list
+        for (int i = current_idx; i < open_count - 1; i++) {
+            open_list[i] = open_list[i + 1];
+        }
+        open_count--;
+        
+        map->nodes[current_x][current_y].closed = true;
+        
+        // Check if goal reached
+        if (current_x == goal_x && current_y == goal_y) {
+            // Reconstruct path
+            *path_length = 0;
+            int x = goal_x, y = goal_y;
+            
+            while (x != start_x || y != start_y) {
+                path_x[*path_length] = x;
+                path_y[*path_length] = y;
+                (*path_length)++;
+                
+                int parent_x = map->nodes[x][y].parent_x;
+                int parent_y = map->nodes[x][y].parent_y;
+                x = parent_x;
+                y = parent_y;
+            }
+            
+            // Add start position
+            path_x[*path_length] = start_x;
+            path_y[*path_length] = start_y;
+            (*path_length)++;
+            
+            return;
+        }
+        
+        // Check neighbors
+        int dx[] = {-1, -1, -1, 0, 0, 1, 1, 1};
+        int dy[] = {-1, 0, 1, -1, 1, -1, 0, 1};
+        
+        for (int i = 0; i < 8; i++) {
+            int neighbor_x = current_x + dx[i];
+            int neighbor_y = current_y + dy[i];
+            
+            if (!is_valid_position(map, neighbor_x, neighbor_y) ||
+                map->nodes[neighbor_x][neighbor_y].closed) {
+                continue;
+            }
+            
+            float tentative_g = map->nodes[current_x][current_y].g_cost + 
+                               sqrt(dx[i]*dx[i] + dy[i]*dy[i]);
+            
+            if (tentative_g < map->nodes[neighbor_x][neighbor_y].g_cost) {
+                map->nodes[neighbor_x][neighbor_y].parent_x = current_x;
+                map->nodes[neighbor_x][neighbor_y].parent_y = current_y;
+                map->nodes[neighbor_x][neighbor_y].g_cost = tentative_g;
+                map->nodes[neighbor_x][neighbor_y].f_cost = 
+                    tentative_g + map->nodes[neighbor_x][neighbor_y].h_cost;
+                
+                // Add to open list if not already there
+                bool in_open = false;
+                for (int j = 0; j < open_count; j++) {
+                    if (open_list[j] == neighbor_x * MAP_WIDTH + neighbor_y) {
+                        in_open = true;
+                        break;
+                    }
+                }
+                
+                if (!in_open && open_count < MAX_NODES) {
+                    open_list[open_count++] = neighbor_x * MAP_WIDTH + neighbor_y;
+                }
+            }
+        }
+    }
+    
+    // No path found
+    *path_length = 0;
+}</code></pre>
+            </div>
+
+            <h3>SLAM (Simultaneous Localization and Mapping)</h3>
+            <p>Real-time mapping and localization:</p>
+            
+            <div class="code-block">
+                <div class="code-header">
+                    <span>EKF-SLAM Implementation</span>
+                    <button class="copy-btn" onclick="copyToClipboard('ekf-slam')">Copy</button>
+                </div>
+                <pre id="ekf-slam"><code>#include <zephyr/kernel.h>
+#include <math.h>
+
+#define MAX_LANDMARKS 100
+#define STATE_SIZE (3 + 2 * MAX_LANDMARKS)  // Robot pose + landmark positions
+
+typedef struct {
+    float x, y, theta;  // Robot pose
+    float landmarks[MAX_LANDMARKS][2];  // Landmark positions
+    int num_landmarks;
+} slam_state_t;
+
+typedef struct {
+    float P[STATE_SIZE][STATE_SIZE];  // Covariance matrix
+    float Q[3][3];  // Process noise
+    float R[2][2];  // Measurement noise
+    slam_state_t state;
+} ekf_slam_t;
+
+static void ekf_slam_predict(ekf_slam_t *slam, float v, float w, float dt) {
+    // State transition
+    slam->state.x += v * cos(slam->state.theta) * dt;
+    slam->state.y += v * sin(slam->state.theta) * dt;
+    slam->state.theta += w * dt;
+    
+    // Normalize angle
+    while (slam->state.theta > M_PI) slam->state.theta -= 2*M_PI;
+    while (slam->state.theta < -M_PI) slam->state.theta += 2*M_PI;
+    
+    // Jacobian of motion model
+    float F[STATE_SIZE][STATE_SIZE] = {0};
+    F[0][0] = 1; F[1][1] = 1; F[2][2] = 1;  // Identity for robot pose
+    
+    F[0][2] = -v * sin(slam->state.theta) * dt;
+    F[1][2] = v * cos(slam->state.theta) * dt;
+    
+    // Update covariance
+    float temp[STATE_SIZE][STATE_SIZE];
+    matrix_multiply(F, slam->P, temp);
+    matrix_transpose_multiply(temp, F, slam->P);
+    
+    // Add process noise
+    slam->P[0][0] += slam->Q[0][0];
+    slam->P[1][1] += slam->Q[1][1];
+    slam->P[2][2] += slam->Q[2][2];
+}
+
+static void ekf_slam_update(ekf_slam_t *slam, float range, float bearing, int landmark_id) {
+    if (landmark_id >= slam->state.num_landmarks) {
+        // New landmark - add to state
+        slam->state.landmarks[landmark_id][0] = slam->state.x + range * cos(slam->state.theta + bearing);
+        slam->state.landmarks[landmark_id][1] = slam->state.y + range * sin(slam->state.theta + bearing);
+        slam->state.num_landmarks++;
+        
+        // Initialize covariance for new landmark
+        int idx = 3 + 2 * landmark_id;
+        slam->P[idx][idx] = 1000.0f;  // High uncertainty
+        slam->P[idx+1][idx+1] = 1000.0f;
+        
+        return;
+    }
+    
+    // Existing landmark - update
+    float landmark_x = slam->state.landmarks[landmark_id][0];
+    float landmark_y = slam->state.landmarks[landmark_id][1];
+    
+    // Predicted measurement
+    float dx = landmark_x - slam->state.x;
+    float dy = landmark_y - slam->state.y;
+    float predicted_range = sqrt(dx*dx + dy*dy);
+    float predicted_bearing = atan2(dy, dx) - slam->state.theta;
+    
+    // Normalize bearing
+    while (predicted_bearing > M_PI) predicted_bearing -= 2*M_PI;
+    while (predicted_bearing < -M_PI) predicted_bearing += 2*M_PI;
+    
+    // Innovation
+    float innovation[2] = {
+        range - predicted_range,
+        bearing - predicted_bearing
+    };
+    
+    // Measurement Jacobian
+    float H[2][STATE_SIZE] = {0};
+    float inv_range = 1.0f / predicted_range;
+    
+    H[0][0] = -dx * inv_range;  // dr/dx
+    H[0][1] = -dy * inv_range;  // dr/dy
+    H[0][2] = 0;  // dr/dtheta
+    H[0][3 + 2*landmark_id] = dx * inv_range;  // dr/dlandmark_x
+    H[0][4 + 2*landmark_id] = dy * inv_range;  // dr/dlandmark_y
+    
+    H[1][0] = dy * inv_range * inv_range;  // db/dx
+    H[1][1] = -dx * inv_range * inv_range;  // db/dy
+    H[1][2] = -1;  // db/dtheta
+    H[1][3 + 2*landmark_id] = -dy * inv_range * inv_range;  // db/dlandmark_x
+    H[1][4 + 2*landmark_id] = dx * inv_range * inv_range;  // db/dlandmark_y
+    
+    // Innovation covariance
+    float S[2][2];
+    float HPH[2][2];
+    matrix_multiply(H, slam->P, temp);
+    matrix_transpose_multiply(temp, H, HPH);
+    matrix_add(HPH, slam->R, S);
+    
+    // Kalman gain
+    float K[STATE_SIZE][2];
+    float PHT[STATE_SIZE][2];
+    matrix_transpose_multiply(slam->P, H, PHT);
+    matrix_multiply_inverse(PHT, S, K);
+    
+    // Update state
+    float Ky[STATE_SIZE];
+    matrix_vector_multiply(K, innovation, Ky);
+    
+    slam->state.x += Ky[0];
+    slam->state.y += Ky[1];
+    slam->state.theta += Ky[2];
+    
+    slam->state.landmarks[landmark_id][0] += Ky[3 + 2*landmark_id];
+    slam->state.landmarks[landmark_id][1] += Ky[4 + 2*landmark_id];
+    
+    // Update covariance
+    float IKH[STATE_SIZE][STATE_SIZE];
+    float KH[STATE_SIZE][STATE_SIZE];
+    matrix_multiply(K, H, KH);
+    matrix_subtract_identity(KH, IKH);
+    matrix_multiply(IKH, slam->P, slam->P);
+}</code></pre>
+            </div>
+        </section>
+                </div>
+        </main>
+    </div>
+    
+    <script src="../js/main.js"></script>
+</body>
+</html>

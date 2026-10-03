@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resources - WattLab Guides</title>
+    <link rel="stylesheet" href="../css/main.css">
+    <link rel="icon" type="image/svg+xml" href="../assets/icons/svg/developer_board.svg">
+</head>
+    <!-- Sticky Search Bar -->
+    <div class="search-bar">
+        <div class="search-container">
+            <button class="mobile-menu-btn" onclick="wattLab.toggleMobileNav()">☰</button>
+            <input type="text" class="search-input" placeholder="Search embedded systems topics, patterns, protocols..." />
+            <button class="search-btn">Search</button>
+        </div>
+    </div>
+    
+    <!-- Main Container -->
+    <div class="main-container">
+        <!-- Left Navigation -->
+        <nav class="nav-sidebar" id="navSidebar">
+            <!-- Navigation will be populated by JavaScript -->
+        </nav>
+        
+        <!-- Content Area -->
+        <main class="content-area">
+            <div class="content-header">
+                <h1 class="content-title">📚 Resources</h1>
+                <p class="content-subtitle">Advanced resources for embedded systems</p>
+            </div>
+            
+            <div class="breadcrumb">
+                <a href="../index.html">Home</a> > <a href="#resources">Resources</a>
+            </div>
+            
+            <div class="content">
+        <h1>Resources</h1>
+        
+        <!-- Development Tools -->
+        <section id="development-tools">
+            <h2>Development Tools</h2>
+            
+            <h3>Cross-Compilation Toolchains</h3>
+            <p>Essential toolchains for embedded development:</p>
+            
+            <div class="code-block">
+                <div class="code-header">
+                    <span>ARM GCC Toolchain Setup</span>
+                    <button class="copy-btn" onclick="copyToClipboard('arm-toolchain')">Copy</button>
+                </div>
+                <pre id="arm-toolchain"><code># ARM Cortex-M toolchain installation
+# Ubuntu/Debian
+sudo apt update
+sudo apt install gcc-arm-none-eabi gdb-arm-none-eabi
+
+# Verify installation
+arm-none-eabi-gcc --version
+arm-none-eabi-gdb --version
+
+# Environment setup
+export ARM_TOOLCHAIN_PATH="/usr/bin"
+export PATH="$ARM_TOOLCHAIN_PATH:$PATH"
+
+# Makefile configuration
+CC = arm-none-eabi-gcc
+AS = arm-none-eabi-as
+LD = arm-none-eabi-ld
+OBJCOPY = arm-none-eabi-objcopy
+OBJDUMP = arm-none-eabi-objdump
+SIZE = arm-none-eabi-size
+
+# Compiler flags
+CFLAGS = -mcpu=cortex-m4 -mthumb -mfpu=fpv4-sp-d16 -mfloat-abi=hard
+CFLAGS += -O2 -ffunction-sections -fdata-sections
+CFLAGS += -Wall -Wextra -Werror -std=c99
+
+# Linker flags
+LDFLAGS = -T linker_script.ld -Wl,--gc-sections
+LDFLAGS += -Wl,-Map=output.map -Wl,--print-memory-usage</code></pre>
+            </div>
+
+            <h3>Debugging Tools</h3>
+            <p>Advanced debugging and analysis tools:</p>
+            
+            <div class="code-block">
+                <div class="code-header">
+                    <span>OpenOCD Configuration</span>
+                    <button class="copy-btn" onclick="copyToClipboard('openocd-config')">Copy</button>
+                </div>
+                <pre id="openocd-config"><code># OpenOCD configuration for STM32F4
+# stm32f4discovery.cfg
+
+source [find interface/stlink.cfg]
+source [find target/stm32f4x.cfg]
+
+# Enable SWO trace
+transport select hla_swd
+hla_swd
+
+# Reset configuration
+reset_config srst_only
+reset_config srst_nogate
+
+# Flash configuration
+flash bank $_FLASHNAME stm32f4x 0x08000000 0 0 0 $_TARGETNAME
+
+# Enable semihosting
+arm semihosting enable
+
+# GDB server configuration
+gdb_port 3333
+telnet_port 4444
+tcl_port 6666
+
+# Debugging commands
+proc init_reset { } {
+    reset halt
+    stm32f4x.cpu configure -event gdb-attach { halt }
+}
+
+proc program_flash { } {
+    init_reset
+    flash write_image erase firmware.elf
+    reset run
+}
+
+# Custom commands
+proc read_memory { addr len } {
+    set data ""
+    for {set i 0} {$i < $len} {incr i 4} {
+        set val [mdw [expr $addr + $i]]
+        append data [format "%08x " $val]
+    }
+    return $data
+}</code></pre>
+            </div>
+
+            <h3>Static Analysis Tools</h3>
+            <p>Code quality and security analysis:</p>
+            
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Static Analysis Setup</span>
+                    <button class="copy-btn" onclick="copyToClipboard('static-analysis')">Copy</button>
+                </div>
+                <pre id="static-analysis"><code># Cppcheck configuration
+# cppcheck-config.xml
+<?xml version="1.0"?>
+<config>
+    <suppressions>
+        <suppression>
+            <id>unusedFunction</id>
+            <fileName>main.c</fileName>
+        </suppression>
+    </suppressions>
+    <inconclusive>true</inconclusive>
+    <force>true</force>
+    <max-configs>1</max-configs>
+    <enable>all</enable>
+    <platform>arm</platform>
+    <std>c99</std>
+</config>
+
+# Run static analysis
+cppcheck --xml --xml-version=2 --enable=all --inconclusive \
+         --platform=arm --std=c99 --config-file=cppcheck-config.xml \
+         --output-file=analysis.xml src/
+
+# Clang Static Analyzer
+scan-build make
+
+# PVS-Studio configuration
+# pvs-studio.cfg
+[General]
+# Enable all diagnostics
+Enable=V001,V002,V003,V004,V005,V006,V007,V008,V009,V010
+Enable=V011,V012,V013,V014,V015,V016,V017,V018,V019,V020
+
+# Exclude false positives
+ExcludePath=.*/third_party/.*
+ExcludePath=.*/vendor/.*
+
+# Output format
+OutputFormat=html
+OutputFile=analysis.html
+
+# Run PVS-Studio
+pvs-studio-analyzer trace -- make
+pvs-studio-analyzer analyze
+plog-converter -a GA:1,2,3 -t html -o analysis.html PVS-Studio.log</code></pre>
+            </div>
+        </section>
+
+        <!-- Hardware Platforms -->
+        <section id="hardware-platforms">
+            <h2>Hardware Platforms</h2>
+            
+            <h3>Development Boards</h3>
+            <p>Popular embedded development platforms:</p>
+            
+            <div class="code-block">
+                <div class="code-header">
+                    <span>STM32 Development Setup</span>
+                    <button class="copy-btn" onclick="copyToClipboard('stm32-setup')">Copy</button>
+                </div>
+                <pre id="stm32-setup"><code># STM32CubeMX project generation
+# Generate code for STM32F407VGTx
+# Clock configuration: 168 MHz
+# GPIO configuration
+# - PA5: LED output
+# - PC13: User button input
+# - USART2: Debug output (PA2/PA3)
+
+# STM32CubeIDE project structure
+project/
+├── Core/
+│   ├── Inc/
+│   │   ├── main.h
+│   │   ├── stm32f4xx_hal_conf.h
+│   │   └── stm32f4xx_it.h
+│   └── Src/
+│       ├── main.c
+│       ├── stm32f4xx_hal_msp.c
+│       └── stm32f4xx_it.c
+├── Drivers/
+│   └── STM32F4xx_HAL_Driver/
+├── Middlewares/
+│   └── Third_Party/
+└── Debug/
+
+# Makefile for STM32F4
+TARGET = firmware
+MCU = STM32F407VGTx
+
+# Source files
+SOURCES = Core/Src/main.c \
+          Core/Src/stm32f4xx_hal_msp.c \
+          Core/Src/stm32f4xx_it.c \
+          Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal.c \
+          Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_cortex.c
+
+# Include paths
+INCLUDES = -ICore/Inc \
+           -IDrivers/STM32F4xx_HAL_Driver/Inc \
+           -IDrivers/STM32F4xx_HAL_Driver/Inc/Legacy \
+           -IDrivers/CMSIS/Device/ST/STM32F4xx/Include \
+           -IDrivers/CMSIS/Include
+
+# Compiler flags
+CFLAGS = -mcpu=cortex-m4 -mthumb -mfpu=fpv4-sp-d16 -mfloat-abi=hard
+CFLAGS += -DSTM32F407xx -DUSE_HAL_DRIVER
+CFLAGS += -O2 -ffunction-sections -fdata-sections
+CFLAGS += -Wall -Wextra -Werror
+
+# Linker script
+LDSCRIPT = STM32F407VGTx_FLASH.ld
+
+# Build rules
+$(TARGET).elf: $(SOURCES)
+	$(CC) $(CFLAGS) $(INCLUDES) -T$(LDSCRIPT) -o $@ $^
+	$(SIZE) $@
+
+flash: $(TARGET).elf
+	openocd -f interface/stlink.cfg -f target/stm32f4x.cfg \
+	        -c "program $(TARGET).elf verify reset exit"
+
+debug: $(TARGET).elf
+	openocd -f interface/stlink.cfg -f target/stm32f4x.cfg &
+	arm-none-eabi-gdb $(TARGET).elf -ex "target remote localhost:3333"</code></pre>
+            </div>
+
+            <h3>Raspberry Pi Setup</h3>
+            <p>Linux-based embedded development:</p>
+            
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Raspberry Pi Development Environment</span>
+                    <button class="copy-btn" onclick="copyToClipboard('rpi-setup')">Copy</button>
+                </div>
+                <pre id="rpi-setup"><code># Raspberry Pi OS setup
+# Update system
+sudo apt update && sudo apt upgrade -y
+
+# Install development tools
+sudo apt install -y build-essential cmake git
+sudo apt install -y python3-pip python3-venv
+sudo apt install -y vim nano htop
+
+# Install GPIO libraries
+sudo apt install -y python3-rpi.gpio
+sudo apt install -y libgpiod-dev libgpiod2
+
+# Install cross-compilation tools
+sudo apt install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+sudo apt install -y gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
+
+# Install kernel development tools
+sudo apt install -y raspberrypi-kernel-headers
+sudo apt install -y dkms
+
+# GPIO configuration
+# Enable GPIO interfaces
+echo "dtparam=spi=on" | sudo tee -a /boot/config.txt
+echo "dtparam=i2c_arm=on" | sudo tee -a /boot/config.txt
+echo "dtparam=uart=on" | sudo tee -a /boot/config.txt
+
+# Install device tree compiler
+sudo apt install -y device-tree-compiler
+
+# Create device tree overlay
+# gpio-overlay.dts
+/dts-v1/;
+/plugin/;
+
+/ {
+    compatible = "brcm,bcm2835";
+    
+    fragment@0 {
+        target = <&gpio>;
+        __overlay__ {
+            custom_pins: custom_pins {
+                brcm,pins = <18 19 20 21>;
+                brcm,function = <0 0 0 0>; // GPIO
+                brcm,pull = <0 0 0 0>; // No pull
+            };
+        };
+    };
+    
+    fragment@1 {
+        target-path = "/";
+        __overlay__ {
+            custom_device {
+                compatible = "custom,gpio-device";
+                pinctrl-names = "default";
+                pinctrl-0 = <&custom_pins>;
+                gpios = <&gpio 18 0>, <&gpio 19 0>;
+                status = "okay";
+            };
+        };
+    };
+};
+
+# Compile overlay
+dtc -I dts -O dtb -o gpio-overlay.dtbo gpio-overlay.dts
+
+# Load overlay
+sudo dtoverlay gpio-overlay.dtbo</code></pre>
+            </div>
+
+            <h3>Arduino Ecosystem</h3>
+            <p>Rapid prototyping and development:</p>
+            
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Arduino Development Setup</span>
+                    <button class="copy-btn" onclick="copyToClipboard('arduino-setup')">Copy</button>
+                </div>
+                <pre id="arduino-setup"><code># Arduino CLI installation
+# Download and install Arduino CLI
+curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sh
+
+# Add to PATH
+export PATH="$PATH:$HOME/bin"
+
+# Initialize Arduino CLI
+arduino-cli config init
+
+# Add board manager URLs
+arduino-cli config add board_manager.additional_urls \
+    "https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json"
+
+# Update core index
+arduino-cli core update-index
+
+# Install ESP32 core
+arduino-cli core install esp32:esp32
+
+# Install libraries
+arduino-cli lib install "WiFi"
+arduino-cli lib install "PubSubClient"
+arduino-cli lib install "ArduinoJson"
+arduino-cli lib install "Adafruit GFX Library"
+arduino-cli lib install "Adafruit SSD1306"
+
+# List installed boards
+arduino-cli board listall
+
+# Compile and upload
+arduino-cli compile --fqbn esp32:esp32:esp32 sketch_name
+arduino-cli upload -p /dev/ttyUSB0 --fqbn esp32:esp32:esp32 sketch_name
+
+# Monitor serial output
+arduino-cli monitor -p /dev/ttyUSB0 -c baudrate=115200
+
+# PlatformIO integration
+# platformio.ini
+[env:esp32dev]
+platform = espressif32
+board = esp32dev
+framework = arduino
+monitor_speed = 115200
+lib_deps = 
+    WiFi
+    PubSubClient
+    ArduinoJson
+    Adafruit GFX Library
+    Adafruit SSD1306
+
+# Build and upload with PlatformIO
+pio run --target upload
+pio device monitor</code></pre>
+            </div>
+        </section>
+
+        <!-- Software Frameworks -->
+        <section id="software-frameworks">
+            <h2>Software Frameworks</h2>
+            
+            <h3>Zephyr RTOS</h3>
+            <p>Modern, scalable real-time operating system:</p>
+            
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Zephyr Project Setup</span>
+                    <button class="copy-btn" onclick="copyToClipboard('zephyr-setup')">Copy</button>
+                </div>
+                <pre id="zephyr-setup"><code># Install Zephyr SDK
+wget https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v0.16.0/zephyr-sdk-0.16.0_linux-x86_64.tar.xz
+tar xf zephyr-sdk-0.16.0_linux-x86_64.tar.xz
+cd zephyr-sdk-0.16.0
+./setup.sh
+
+# Install West (Zephyr meta-tool)
+pip3 install west
+
+# Initialize workspace
+west init zephyr-workspace
+cd zephyr-workspace
+west update
+
+# Install Python dependencies
+pip3 install -r zephyr/scripts/requirements.txt
+
+# Set up environment
+export ZEPHYR_TOOLCHAIN_VARIANT=zephyr
+export ZEPHYR_SDK_INSTALL_DIR=$HOME/zephyr-sdk-0.16.0
+
+# Create application
+west init -m https://github.com/zephyrproject-rtos/zephyr --mr v3.4.0
+west update
+west zephyr-export
+
+# Build sample application
+cd zephyr/samples/hello_world
+west build -b nucleo_f401re
+
+# Flash to board
+west flash
+
+# Debug with GDB
+west build -t debugserver
+arm-none-eabi-gdb build/zephyr/zephyr.elf -ex "target remote localhost:3333"
+
+# Custom application structure
+my_app/
+├── CMakeLists.txt
+├── prj.conf
+├── src/
+│   └── main.c
+├── boards/
+│   └── custom_board.overlay
+└── dts/
+    └── bindings/
+        └── vendor,custom-sensor.yaml
+
+# CMakeLists.txt
+cmake_minimum_required(VERSION 3.20.0)
+find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
+project(my_app)
+
+target_sources(app PRIVATE src/main.c)
+
+# prj.conf
+CONFIG_GPIO=y
+CONFIG_I2C=y
+CONFIG_SENSOR=y
+CONFIG_LOG=y
+CONFIG_LOG_DEFAULT_LEVEL_INF=y</code></pre>
+            </div>
+
+            <h3>FreeRTOS</h3>
+            <p>Real-time operating system for microcontrollers:</p>
+            
+            <div class="code-block">
+                <div class="code-header">
+                    <span>FreeRTOS Configuration</span>
+                    <button class="copy-btn" onclick="copyToClipboard('freertos-config')">Copy</button>
+                </div>
+                <pre id="freertos-config"><code># FreeRTOSConfig.h configuration
+#ifndef FREERTOS_CONFIG_H
+#define FREERTOS_CONFIG_H
+
+// System configuration
+#define configUSE_PREEMPTION                    1
+#define configUSE_TICKLESS_IDLE                 1
+#define configUSE_IDLE_HOOK                     1
+#define configUSE_TICK_HOOK                     1
+#define configCPU_CLOCK_HZ                      168000000
+#define configTICK_RATE_HZ                      1000
+#define configMAX_PRIORITIES                    7
+#define configUSE_16_BIT_TICKS                  0
+#define configIDLE_SHOULD_YIELD                 1
+#define configUSE_MUTEXES                       1
+#define configUSE_RECURSIVE_MUTEXES             1
+#define configUSE_COUNTING_SEMAPHORES           1
+#define configUSE_ALTERNATIVE_API              0
+#define configCHECK_FOR_STACK_OVERFLOW         2
+#define configUSE_MALLOC_FAILED_HOOK           1
+#define configUSE_DAEMON_TASK_STARTUP_HOOK     1
+#define configUSE_APPLICATION_TASK_TAG         0
+#define configNUM_THREAD_LOCAL_STORAGE_POINTERS 0
+#define configUSE_STACK_OVERFLOW_HOOK          1
+#define configUSE_TRACE_FACILITY               1
+#define configUSE_STATS_FORMATTING_FUNCTIONS   1
+#define configUSE_TRACE_FACILITY_2             1
+#define configUSE_NEWLIB_REENTRANT             1
+#define configENABLE_BACKWARD_COMPATIBILITY     1
+#define configUSE_PORT_OPTIMISED_TASK_SELECTION 1
+
+// Memory allocation
+#define configSUPPORT_STATIC_ALLOCATION         1
+#define configSUPPORT_DYNAMIC_ALLOCATION        1
+#define configTOTAL_HEAP_SIZE                   (15 * 1024)
+#define configAPPLICATION_ALLOCATED_HEAP        0
+
+// Hook functions
+#define configUSE_IDLE_HOOK                     1
+#define configUSE_TICK_HOOK                     1
+#define configCHECK_FOR_STACK_OVERFLOW         2
+#define configUSE_MALLOC_FAILED_HOOK            1
+#define configUSE_DAEMON_TASK_STARTUP_HOOK      1
+
+// Trace and debug
+#define configUSE_TRACE_FACILITY               1
+#define configUSE_STATS_FORMATTING_FUNCTIONS   1
+#define configGENERATE_RUN_TIME_STATS           1
+#define configUSE_TRACE_FACILITY_2             1
+
+// Co-routines
+#define configUSE_CO_ROUTINES                   0
+#define configMAX_CO_ROUTINE_PRIORITIES         2
+
+// Software timers
+#define configUSE_TIMERS                        1
+#define configTIMER_TASK_PRIORITY               2
+#define configTIMER_QUEUE_LENGTH                10
+#define configTIMER_TASK_STACK_DEPTH            256
+
+// Interrupt nesting
+#define configKERNEL_INTERRUPT_PRIORITY         [configLIBRARY_LOWEST_INTERRUPT_PRIORITY << (8 - configPRIO_BITS)]
+#define configMAX_SYSCALL_INTERRUPT_PRIORITY    [configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY << (8 - configPRIO_BITS)]
+
+// Application specific
+#define configASSERT(x)                        if((x) == 0) { taskDISABLE_INTERRUPTS(); for(;;); }
+#define configPRINTF(X)                         printf X
+#define configMAX_TASK_NAME_LEN                 16
+
+#endif /* FREERTOS_CONFIG_H */
+
+// Task creation example
+void vTaskFunction(void *pvParameters) {
+    char *pcTaskName;
+    pcTaskName = (char *)pvParameters;
+    
+    for(;;) {
+        printf("Task %s is running\n", pcTaskName);
+        vTaskDelay(pdMS_TO_TICKS(1000));
+    }
+}
+
+// Create tasks
+xTaskCreate(vTaskFunction, "Task1", 128, "Task 1", 1, NULL);
+xTaskCreate(vTaskFunction, "Task2", 128, "Task 2", 1, NULL);
+vTaskStartScheduler();</code></pre>
+            </div>
+
+            <h3>Embedded Linux</h3>
+            <p>Linux-based embedded systems development:</p>
+            
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Yocto Project Build</span>
+                    <button class="copy-btn" onclick="copyToClipboard('yocto-build')">Copy</button>
+                </div>
+                <pre id="yocto-build"><code># Yocto Project setup
+# Install dependencies
+sudo apt update
+sudo apt install -y gawk wget git-core diffstat unzip texinfo gcc-multilib \
+     build-essential chrpath socat cpio python3 python3-pip python3-pexpect \
+     xz-utils debianutils iputils-ping python3-git python3-jinja2 libegl1-mesa \
+     libsdl1.2-dev pylint3 xterm
+
+# Clone Poky
+git clone git://git.yoctoproject.org/poky
+cd poky
+git checkout kirkstone
+
+# Initialize build environment
+source oe-init-build-env build
+
+# Configure build
+# conf/local.conf
+MACHINE = "raspberrypi4"
+DISTRO = "poky"
+PACKAGE_CLASSES = "package_rpm"
+EXTRA_IMAGE_FEATURES = "debug-tweaks"
+USER_CLASSES = "buildstats image-mklibs image-prelink"
+PATCHRESOLVE = "noop"
+BB_DISKMON_DIRS = "\
+    STOPTASKS,${TMPDIR},1G,100M \
+    STOPTASKS,${DL_DIR},1G,100M \
+    STOPTASKS,${SSTATE_DIR},1G,100M \
+    STOPTASKS,/tmp,100M,100K \
+    ABORT,${TMPDIR},100M,1K \
+    ABORT,${DL_DIR},100M,1K \
+    ABORT,${SSTATE_DIR},100M,1K \
+    ABORT,/tmp,10M,1K"
+
+# Add custom layer
+bitbake-layers create-layer ../meta-custom
+bitbake-layers add-layer ../meta-custom
+
+# Build image
+bitbake core-image-minimal
+
+# Custom recipe example
+# meta-custom/recipes-custom/myapp/myapp_1.0.bb
+DESCRIPTION = "Custom embedded application"
+LICENSE = "MIT"
+LIC_FILES_CHKSUM = "file://LICENSE;md5=1234567890abcdef"
+
+SRC_URI = "git://github.com/user/myapp.git;protocol=https"
+SRCREV = "main"
+
+S = "${WORKDIR}/git"
+
+inherit cmake
+
+DEPENDS = "libgpiod json-c"
+
+EXTRA_OECMAKE = "-DCMAKE_BUILD_TYPE=Release"
+
+do_install_append() {
+    install -d ${D}${sysconfdir}/init.d
+    install -m 0755 ${S}/scripts/myapp-init ${D}${sysconfdir}/init.d/myapp
+    update-rc.d -r ${D} myapp start 99 2 3 4 5 .
+}
+
+# Build custom image
+# meta-custom/recipes-core/images/custom-image.bb
+DESCRIPTION = "Custom embedded Linux image"
+
+IMAGE_INSTALL = " \
+    packagegroup-core-boot \
+    kernel-modules \
+    myapp \
+    i2c-tools \
+    gpiod \
+    python3 \
+    python3-gpiozero \
+"
+
+IMAGE_FEATURES += "ssh-server-dropbear"
+IMAGE_FSTYPES = "tar.bz2 ext4"
+
+inherit core-image</code></pre>
+            </div>
+        </section>
+
+        <!-- Documentation and Standards -->
+        <section id="documentation">
+            <h2>Documentation and Standards</h2>
+            
+            <h3>Technical Standards</h3>
+            <p>Industry standards and specifications:</p>
+            
+            <div class="code-block">
+                <div class="code-header">
+                    <span>MISRA C Guidelines</span>
+                    <button class="copy-btn" onclick="copyToClipboard('misra-c')">Copy</button>
+                </div>
+                <pre id="misra-c"><code>// MISRA C:2012 Guidelines for Embedded Systems
+// Rule 8.2: All identifiers shall be unique
+// Rule 8.3: All declarations shall be at file scope or block scope
+// Rule 8.4: Compatible types shall be used for parameters and return values
+
+// Rule 8.6: Identifiers shall be distinct from macro names
+#define MAX_SIZE 100
+// int MAX_SIZE; // Violation: identifier same as macro
+
+// Rule 9.1: The value of an object with automatic storage duration shall not be read before it has been set
+void function(void) {
+    int x; // Uninitialized
+    // int y = x; // Violation: reading uninitialized variable
+    x = 5;  // Correct: initialize before use
+    int y = x; // Correct: x is now initialized
+}
+
+// Rule 10.1: Operands shall not be of an inappropriate essential type
+uint8_t a = 5;
+uint8_t b = 10;
+// uint8_t c = a + b; // Violation: result may overflow
+uint16_t c = (uint16_t)a + (uint16_t)b; // Correct: explicit cast
+
+// Rule 10.3: The value of an expression shall not be assigned to an object with a narrower essential type
+uint16_t value = 0x1234;
+uint8_t byte = (uint8_t)value; // Correct: explicit cast
+
+// Rule 11.1: Conversions shall not be performed between a pointer to function and any other type
+void (*func_ptr)(void) = NULL;
+// int *int_ptr = (int*)func_ptr; // Violation: inappropriate conversion
+
+// Rule 11.2: Conversions shall not be performed between a pointer to object and any other type
+int *int_ptr = NULL;
+// void (*func_ptr)(void) = (void(*)())int_ptr; // Violation
+
+// Rule 11.3: A cast shall not be performed between a pointer to object type and a pointer to a different object type
+int *int_ptr = NULL;
+// char *char_ptr = (char*)int_ptr; // Violation: different object types
+// Use union for type punning if necessary
+
+// Rule 12.1: The precedence of operators within expressions shall be made explicit
+int result = a + b * c; // Violation: precedence not explicit
+int result = a + (b * c); // Correct: explicit precedence
+
+// Rule 13.1: Initializer lists shall not contain persistent side effects
+int array[] = {1, 2, 3, 4, 5}; // Correct: no side effects
+// int array[] = {1, 2, function(), 4, 5}; // Violation: side effect in initializer
+
+// Rule 14.1: A loop counter shall not have essentially floating type
+// for (float i = 0.0f; i < 10.0f; i += 1.0f) // Violation: floating counter
+for (int i = 0; i < 10; i++) // Correct: integer counter
+
+// Rule 15.1: The goto statement shall not be used
+// goto label; // Violation: avoid goto
+// Use structured programming constructs instead
+
+// Rule 16.1: All switch statements shall be well-formed
+switch (value) {
+    case 1:
+        // statements
+        break;
+    case 2:
+        // statements
+        break;
+    default:
+        // statements
+        break;
+}
+
+// Rule 17.1: The features of <stdarg.h> shall not be used
+// va_list args; // Violation: avoid variadic functions
+// Use function overloading or fixed parameter lists
+
+// Rule 18.1: A pointer resulting from arithmetic on a pointer operand shall address an element of the same array
+int array[10];
+int *ptr = array;
+// int *end = ptr + 20; // Violation: beyond array bounds
+int *end = ptr + 10; // Correct: within array bounds</code></pre>
+            </div>
+
+            <h3>API Documentation</h3>
+            <p>Comprehensive API reference and examples:</p>
+            
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Doxygen Documentation</span>
+                    <button class="copy-btn" onclick="copyToClipboard('doxygen')">Copy</button>
+                </div>
+                <pre id="doxygen"><code># Doxyfile configuration
+PROJECT_NAME           = "WattLab Embedded API"
+PROJECT_NUMBER         = "1.0.0"
+PROJECT_BRIEF          = "Comprehensive embedded systems API"
+OUTPUT_DIRECTORY       = docs
+INPUT                  = src include
+RECURSIVE              = YES
+FILE_PATTERNS          = *.c *.h *.cpp *.hpp
+EXTRACT_ALL            = YES
+EXTRACT_PRIVATE        = YES
+EXTRACT_STATIC         = YES
+EXTRACT_LOCAL_METHODS  = YES
+CALL_GRAPH             = YES
+CALLER_GRAPH           = YES
+HAVE_DOT               = YES
+DOT_GRAPH_MAX_NODES    = 50
+MAX_DOT_GRAPH_DEPTH    = 0
+DOT_TRANSPARENT        = YES
+GENERATE_HTML          = YES
+GENERATE_LATEX         = NO
+GENERATE_XML           = YES
+GENERATE_TREEVIEW      = YES
+DISABLE_INDEX          = NO
+ALWAYS_DETAILED_SEC    = YES
+INLINE_INHERITED_MEMB  = YES
+FULL_PATH_NAMES        = YES
+STRIP_FROM_PATH        = src/
+STRIP_FROM_INC_PATH    = include/
+TAB_SIZE               = 4
+OPTIMIZE_OUTPUT_FOR_C  = YES
+MARKDOWN_SUPPORT       = YES
+AUTOLINK_SUPPORT       = YES
+BUILTIN_STL_SUPPORT    = YES
+CPP_CLI_SUPPORT        = YES
+SIP_SUPPORT            = YES
+IDL_PROPERTY_SUPPORT   = YES
+DISTRIBUTE_GROUP_DOC   = YES
+GROUP_GRAPHS           = YES
+ALPHABETICAL_INDEX     = YES
+GENERATE_TODOLIST      = YES
+GENERATE_TESTLIST      = YES
+GENERATE_BUGLIST       = YES
+GENERATE_DEPRECATEDLIST = YES
+ENABLED_SECTIONS       = 
+MAX_INITIALIZER_LINES  = 30
+SHOW_USED_FILES        = YES
+SHOW_FILES             = YES
+SHOW_NAMESPACES        = YES
+QUIET                  = NO
+WARNINGS               = YES
+WARN_IF_UNDOCUMENTED   = YES
+WARN_IF_DOC_ERROR      = YES
+WARN_NO_PARAMDOC       = NO
+WARN_FORMAT            = "$file:$line: $text"
+WARN_LOGFILE           = doxygen.log
+
+# Example API documentation
+/**
+ * @file sensor_api.h
+ * @brief Sensor API for embedded systems
+ * @author WattLab Team
+ * @version 1.0.0
+ * @date 2024-01-01
+ */
+
+#ifndef SENSOR_API_H
+#define SENSOR_API_H
+
+#include <stdint.h>
+#include <stdbool.h>
+
+/**
+ * @defgroup sensor_api Sensor API
+ * @brief Comprehensive sensor interface for embedded systems
+ * @{
+ */
+
+/**
+ * @brief Sensor types supported by the API
+ */
+typedef enum {
+    SENSOR_TYPE_TEMPERATURE,    /**< Temperature sensor */
+    SENSOR_TYPE_HUMIDITY,       /**< Humidity sensor */
+    SENSOR_TYPE_PRESSURE,       /**< Pressure sensor */
+    SENSOR_TYPE_ACCELEROMETER, /**< Accelerometer sensor */
+    SENSOR_TYPE_GYROSCOPE,      /**< Gyroscope sensor */
+    SENSOR_TYPE_MAGNETOMETER    /**< Magnetometer sensor */
+} sensor_type_t;
+
+/**
+ * @brief Sensor configuration structure
+ */
+typedef struct {
+    sensor_type_t type;         /**< Sensor type */
+    uint32_t sample_rate;       /**< Sample rate in Hz */
+    uint8_t resolution;         /**< Resolution in bits */
+    bool enable_interrupt;      /**< Enable interrupt on data ready */
+    void (*callback)(void);     /**< Data ready callback function */
+} sensor_config_t;
+
+/**
+ * @brief Sensor data structure
+ */
+typedef struct {
+    float value;                /**< Sensor value */
+    uint64_t timestamp;        /**< Timestamp in microseconds */
+    uint8_t quality;           /**< Data quality (0-100) */
+} sensor_data_t;
+
+/**
+ * @brief Initialize sensor with given configuration
+ * @param config Pointer to sensor configuration
+ * @return 0 on success, negative error code on failure
+ * @retval 0 Success
+ * @retval -EINVAL Invalid configuration
+ * @retval -ENODEV Sensor not found
+ * @retval -EBUSY Sensor already initialized
+ * 
+ * @code
+ * sensor_config_t config = {
+ *     .type = SENSOR_TYPE_TEMPERATURE,
+ *     .sample_rate = 10,
+ *     .resolution = 12,
+ *     .enable_interrupt = true,
+ *     .callback = temperature_callback
+ * };
+ * 
+ * int ret = sensor_init(&config);
+ * if (ret < 0) {
+ *     printf("Sensor initialization failed: %d\n", ret);
+ * }
+ * @endcode
+ */
+int sensor_init(const sensor_config_t *config);
+
+/**
+ * @brief Read sensor data
+ * @param data Pointer to store sensor data
+ * @return 0 on success, negative error code on failure
+ * @retval 0 Success
+ * @retval -ENODEV Sensor not initialized
+ * @retval -EAGAIN No data available
+ * 
+ * @code
+ * sensor_data_t data;
+ * int ret = sensor_read(&data);
+ * if (ret == 0) {
+ *     printf("Temperature: %.2f°C\n", data.value);
+ * }
+ * @endcode
+ */
+int sensor_read(sensor_data_t *data);
+
+/**
+ * @brief Set sensor sample rate
+ * @param rate Sample rate in Hz
+ * @return 0 on success, negative error code on failure
+ */
+int sensor_set_sample_rate(uint32_t rate);
+
+/**
+ * @brief Enable or disable sensor
+ * @param enable true to enable, false to disable
+ * @return 0 on success, negative error code on failure
+ */
+int sensor_enable(bool enable);
+
+/**
+ * @brief Calibrate sensor
+ * @return 0 on success, negative error code on failure
+ * @note This function may take several seconds to complete
+ */
+int sensor_calibrate(void);
+
+/**
+ * @brief Get sensor information
+ * @param info Pointer to store sensor information
+ * @return 0 on success, negative error code on failure
+ */
+int sensor_get_info(sensor_info_t *info);
+
+/**
+ * @}
+ */
+
+#endif /* SENSOR_API_H */</code></pre>
+            </div>
+        </section>
+
+        <!-- Learning Resources -->
+        <section id="learning-resources">
+            <h2>Learning Resources</h2>
+            
+            <h3>Online Courses</h3>
+            <p>Structured learning paths for embedded systems:</p>
+            
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Learning Path</span>
+                    <button class="copy-btn" onclick="copyToClipboard('learning-path')">Copy</button>
+                </div>
+                <pre id="learning-path"><code># Embedded Systems Learning Path
+
+## Beginner Level (0-6 months)
+### Fundamentals
+- C Programming for Embedded Systems
+- Digital Electronics and Logic Design
+- Microcontroller Architecture (ARM Cortex-M)
+- Basic Circuit Analysis
+
+### Hands-on Projects
+- LED Blinking with GPIO
+- UART Communication
+- ADC and Sensor Reading
+- Timer and PWM Generation
+
+### Tools and Environment
+- Cross-compilation toolchain setup
+- Debugger and emulator usage
+- Version control with Git
+- Basic testing and validation
+
+## Intermediate Level (6-18 months)
+### Real-Time Systems
+- RTOS concepts and implementation
+- Task scheduling and synchronization
+- Interrupt handling and ISRs
+- Memory management
+
+### Communication Protocols
+- I2C, SPI, UART, CAN
+- Wireless protocols (WiFi, Bluetooth, LoRa)
+- Network programming (TCP/IP, MQTT)
+- Protocol analysis and debugging
+
+### Advanced Programming
+- Assembly language basics
+- Optimization techniques
+- Debugging complex issues
+- Code profiling and analysis
+
+## Advanced Level (18+ months)
+### System Design
+- Hardware-software co-design
+- Power management and optimization
+- Real-time constraints and scheduling
+- System integration and testing
+
+### Security
+- Cryptographic algorithms and implementation
+- Secure boot and firmware protection
+- Side-channel attack mitigation
+- Security protocols and standards
+
+### Specialized Topics
+- Machine learning on embedded systems
+- Computer vision and image processing
+- Signal processing and DSP
+- Industrial automation and control
+
+## Recommended Resources
+
+### Books
+- "The Art of Electronics" by Horowitz and Hill
+- "Embedded Systems Architecture" by Daniele Lacamera
+- "Real-Time Design Patterns" by Bruce Powel Douglass
+- "The Hardware Hacking Handbook" by Jasper van Woudenberg
+
+### Online Courses
+- Embedded Systems Specialization (Coursera)
+- ARM Cortex-M Programming (Udemy)
+- Real-Time Operating Systems (edX)
+- IoT Security (Coursera)
+
+### Development Boards
+- STM32 Discovery Kits
+- Raspberry Pi Pico
+- ESP32 Development Boards
+- Arduino Nano 33 IoT
+
+### Software Tools
+- STM32CubeIDE
+- PlatformIO
+- Zephyr RTOS
+- FreeRTOS
+- Yocto Project
+
+### Communities and Forums
+- Stack Overflow (embedded-systems tag)
+- Reddit r/embedded
+- ARM Community Forums
+- Zephyr Project Discord
+- FreeRTOS Support Forums
+
+### Conferences and Events
+- Embedded World
+- ARM TechCon
+- IoT World Congress
+- Real-Time Systems Symposium
+- IEEE Embedded Systems Conference</code></pre>
+            </div>
+
+            <h3>Certification Programs</h3>
+            <p>Professional certification paths:</p>
+            
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Professional Certifications</span>
+                    <button class="copy-btn" onclick="copyToClipboard('certifications')">Copy</button>
+                </div>
+                <pre id="certifications"><code># Embedded Systems Professional Certifications
+
+## ARM Certifications
+### ARM Accredited Engineer (AAE)
+- Prerequisites: 2+ years embedded experience
+- Exam: ARM Cortex-M programming and architecture
+- Topics: Assembly, C programming, debugging, optimization
+- Validity: 3 years
+- Cost: $200
+
+### ARM Certified Professional (ACP)
+- Prerequisites: AAE certification
+- Exam: Advanced ARM system design
+- Topics: Multi-core systems, security, performance optimization
+- Validity: 3 years
+- Cost: $300
+
+## IEEE Certifications
+### Certified Software Development Professional (CSDP)
+- Prerequisites: Bachelor's degree + 2 years experience
+- Exam: Software engineering principles
+- Topics: Requirements, design, testing, maintenance
+- Validity: 3 years
+- Cost: $400
+
+### Certified Software Quality Engineer (CSQE)
+- Prerequisites: Bachelor's degree + 4 years experience
+- Exam: Quality assurance and testing
+- Topics: Test planning, execution, metrics, tools
+- Validity: 3 years
+- Cost: $400
+
+## CompTIA Certifications
+### CompTIA Security+
+- Prerequisites: 2 years IT security experience
+- Exam: Security fundamentals
+- Topics: Threats, vulnerabilities, cryptography, access control
+- Validity: 3 years
+- Cost: $370
+
+### CompTIA Network+
+- Prerequisites: 9 months networking experience
+- Exam: Network technologies
+- Topics: Protocols, troubleshooting, security, wireless
+- Validity: 3 years
+- Cost: $338
+
+## Vendor-Specific Certifications
+### STMicroelectronics STM32 Certification
+- Prerequisites: Basic embedded programming
+- Exam: STM32 ecosystem and tools
+- Topics: HAL, CubeMX, debugging, optimization
+- Validity: 2 years
+- Cost: $150
+
+### Espressif ESP32 Certification
+- Prerequisites: IoT development experience
+- Exam: ESP32 programming and IoT
+- Topics: WiFi, Bluetooth, FreeRTOS, security
+- Validity: 2 years
+- Cost: $100
+
+### NXP i.MX Certification
+- Prerequisites: Linux embedded experience
+- Exam: i.MX processor programming
+- Topics: Linux kernel, device drivers, Yocto
+- Validity: 2 years
+- Cost: $200
+
+## Preparation Resources
+### Study Materials
+- Official certification guides
+- Practice exams and simulations
+- Online training courses
+- Hands-on lab exercises
+- Community study groups
+
+### Recommended Study Time
+- ARM AAE: 3-6 months
+- IEEE CSDP: 6-12 months
+- CompTIA Security+: 2-4 months
+- Vendor certifications: 1-3 months
+
+### Exam Strategies
+- Focus on hands-on experience
+- Practice with real hardware
+- Join study groups and forums
+- Take practice exams regularly
+- Review exam objectives thoroughly
+
+## Continuing Education
+### Professional Development
+- Attend conferences and workshops
+- Participate in online courses
+- Contribute to open-source projects
+- Write technical articles and blogs
+- Mentor junior developers
+
+### Renewal Requirements
+- Complete continuing education units (CEUs)
+- Pass renewal exams
+- Demonstrate ongoing professional development
+- Maintain active practice in the field</code></pre>
+            </div>
+        </section>
+                </div>
+        </main>
+    </div>
+    
+    <script src="../js/main.js"></script>
+</body>
+</html>
