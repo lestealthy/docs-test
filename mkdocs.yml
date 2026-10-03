@@ -1,8 +1,9 @@
 site_name: WattLab Guides
 site_description: Advanced Embedded Systems Knowledge Base
 site_author: WattLab
-repo_url: https://github.com/
-repo_name: _docs_TEST
+site_url: https://lestealthy.github.io/docs-test/
+repo_url: https://github.com/lestealthy/docs-test
+repo_name: docs-test
 
 theme:
   name: material
@@ -43,7 +44,6 @@ theme:
   icon:
     logo: material/developer-board
     repo: fontawesome/brands/github
-  # custom_dir: overrides
 
 plugins:
   - search
@@ -51,9 +51,6 @@ plugins:
       minify_html: true
   - git-revision-date:
       enabled: !ENV [CI, false]
-  - redirects:
-      redirect_maps:
-        'index.md': 'index.md'
 
 markdown_extensions:
   - admonition
@@ -95,9 +92,11 @@ extra_javascript:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github/
+      link: https://github.com/lestealthy/docs-test
   version:
     provider: mike
+
+use_directory_urls: false
 
 nav:
   - Home: index.md
